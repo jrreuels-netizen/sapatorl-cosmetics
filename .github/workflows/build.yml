@@ -33,6 +33,7 @@ jobs:
           path: build.log
 
       - name: Upload mod
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: sapatorl-cosmetics
@@ -48,3 +49,14 @@ jobs:
           make_latest: true
           files: |
             build/libs/sapatorl-cosmetics-*.jar
+
+      - name: Inspect API
+        if: always()
+        run: |
+          JAR=$(find ~/.gradle/caches -path '*minecraft*' -name '*.jar' -size +10M | grep -i -E 'client|merged|common|minecraft' | head -5)
+          echo "$JAR"
+          J=$(echo "$JAR" | grep -i -E 'merged|client' | head -1); [ -z "$J" ] && J=$(echo "$JAR" | head -1)
+          echo "USING $J"
+          for c in com.mojang.blaze3d.platform.InputConstants 'com.mojang.blaze3d.platform.InputConstants$Type' 'com.mojang.blaze3d.platform.InputConstants$Key' net.minecraft.client.KeyMapping; do echo "=== $c"; javap -cp "$J" "$c" | head -60; done
+          echo "=== Minecraft screen-related"; javap -cp "$J" net.minecraft.client.Minecraft | grep -i -E 'screen|gui' | head -40
+          echo "=== key constants"; unzip -l "$J" | grep -i -E 'platform/(Key|Input|Sdl|SDL)' | head -30
