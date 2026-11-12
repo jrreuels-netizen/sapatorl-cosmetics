@@ -53,10 +53,10 @@ jobs:
       - name: Inspect API
         if: always()
         run: |
-          JAR=$(find ~/.gradle/caches -path '*minecraft*' -name '*.jar' -size +10M | grep -i -E 'client|merged|common|minecraft' | head -5)
-          echo "$JAR"
-          J=$(echo "$JAR" | grep -i -E 'merged|client' | head -1); [ -z "$J" ] && J=$(echo "$JAR" | head -1)
-          echo "USING $J"
-          for c in com.mojang.blaze3d.platform.InputConstants 'com.mojang.blaze3d.platform.InputConstants$Type' 'com.mojang.blaze3d.platform.InputConstants$Key' net.minecraft.client.KeyMapping; do echo "=== $c"; javap -cp "$J" "$c" | head -60; done
-          echo "=== Minecraft screen-related"; javap -cp "$J" net.minecraft.client.Minecraft | grep -i -E 'screen|gui' | head -40
-          echo "=== key constants"; unzip -l "$J" | grep -i -E 'platform/(Key|Input|Sdl|SDL)' | head -30
+          J=~/.gradle/caches/fabric-loom/26.3/minecraft-merged.jar
+          [ -f "$J" ] || J=$(find ~/.gradle/caches -name 'minecraft-merged*.jar' | head -1)
+          echo "=== LivingEntityRenderer"; javap -p -cp "$J" net.minecraft.client.renderer.entity.LivingEntityRenderer | grep -i extract
+          echo "=== AvatarRenderer"; javap -p -cp "$J" net.minecraft.client.renderer.entity.player.AvatarRenderer | grep -i extract
+          echo "=== LivingEntityRenderState"; javap -p -cp "$J" net.minecraft.client.renderer.entity.state.LivingEntityRenderState | grep -i head
+          echo "=== CustomHeadLayer"; javap -p -c -cp "$J" net.minecraft.client.renderer.entity.layers.CustomHeadLayer | grep -i -E 'headItem|submit|render' | head -20
+          echo "=== Mixin check"; unzip -p build/libs/sapatorl-cosmetics-1.0.0.jar sapatorl_cosmetics.mixins.json
