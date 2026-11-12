@@ -1,0 +1,77 @@
+package de.sapatorl.cosmetics;
+
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+
+/** Liste aller Cosmetics + aktuell gewähltes Cosmetic (wird gespeichert). */
+public final class Cosmetics {
+    public record Entry(String id, String name, int color) {}
+
+    public static final List<Entry> ALL = List.of(
+            new Entry("krone", "Krone", 0xFFC542),
+            new Entry("zylinder", "Zylinder", 0xAAAAAA),
+            new Entry("heiligenschein", "Heiligenschein", 0xFFF3A0),
+            new Entry("cap", "Cap", 0x55CCFF),
+            new Entry("teufelshoerner", "Teufelshörner", 0xFF5555),
+            new Entry("katzenohren", "Katzenohren", 0xF29BB8),
+            new Entry("sonnenbrille", "Sonnenbrille", 0x55AAAA),
+            new Entry("partyhut", "Partyhut", 0xFF66CC),
+            new Entry("kopfhoerer", "Gaming-Headset", 0xB57BFF)
+    );
+
+    private static String selected = "";
+    private static ItemStack cachedStack = ItemStack.EMPTY;
+
+    private Cosmetics() {}
+
+    public static String selected() {
+        return selected;
+    }
+
+    public static void select(String id) {
+        selected = id == null ? "" : id;
+        cachedStack = ItemStack.EMPTY;
+        save();
+    }
+
+    /** Item, das als Kopf-Cosmetic gerendert wird (leer = nichts). */
+    public static ItemStack stack() {
+        if (selected.isEmpty()) return ItemStack.EMPTY;
+        if (cachedStack.isEmpty()) {
+            ItemStack s = new ItemStack(Items.PAPER);
+            s.set(DataComponents.ITEM_MODEL, Identifier.fromNamespaceAndPath("cosmetics", selected));
+            cachedStack = s;
+        }
+        return cachedStack;
+    }
+
+    private static Path file() {
+        return FabricLoader.getInstance().getConfigDir().resolve("sapatorl_cosmetics.txt");
+    }
+
+    public static void load() {
+        try {
+            Path f = file();
+            if (Files.exists(f)) {
+                String id = Files.readString(f, StandardCharsets.UTF_8).trim();
+                if (ALL.stream().anyMatch(e -> e.id().equals(id))) selected = id;
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static void save() {
+        try {
+            Files.writeString(file(), selected, StandardCharsets.UTF_8);
+        } catch (Exception ignored) {
+        }
+    }
+}

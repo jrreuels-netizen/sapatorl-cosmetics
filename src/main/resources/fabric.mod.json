@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "sapatorl_cosmetics",
+  "version": "${version}",
+  "name": "sapatorl_ Cosmetics",
+  "description": "Cosmetics für deinen Skin – Menü mit K öffnen.",
+  "authors": ["sapatorl_"],
+  "license": "All-Rights-Reserved",
+  "icon": "assets/sapatorl_cosmetics/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["de.sapatorl.cosmetics.CosmeticsClient"]
+  },
+  "mixins": ["sapatorl_cosmetics.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.19.0",
+    "minecraft": "~26.3",
+    "fabric-api": "*"
+  }
+}
