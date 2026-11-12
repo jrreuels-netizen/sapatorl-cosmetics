@@ -54,9 +54,7 @@ jobs:
         if: always()
         run: |
           J=~/.gradle/caches/fabric-loom/26.3/minecraft-merged.jar
-          [ -f "$J" ] || J=$(find ~/.gradle/caches -name 'minecraft-merged*.jar' | head -1)
-          echo "=== LivingEntityRenderer"; javap -p -cp "$J" net.minecraft.client.renderer.entity.LivingEntityRenderer | grep -i extract
-          echo "=== AvatarRenderer"; javap -p -cp "$J" net.minecraft.client.renderer.entity.player.AvatarRenderer | grep -i extract
-          echo "=== LivingEntityRenderState"; javap -p -cp "$J" net.minecraft.client.renderer.entity.state.LivingEntityRenderState | grep -i head
-          echo "=== CustomHeadLayer"; javap -p -c -cp "$J" net.minecraft.client.renderer.entity.layers.CustomHeadLayer | grep -i -E 'headItem|submit|render' | head -20
-          echo "=== Mixin check"; unzip -p build/libs/sapatorl-cosmetics-1.0.0.jar sapatorl_cosmetics.mixins.json
+          echo "=== AvatarRenderer sigs"; javap -s -p -cp "$J" net.minecraft.client.renderer.entity.player.AvatarRenderer | grep -A1 -E 'extractRenderState|class '
+          echo "=== AvatarRenderer.extractRenderState body"; javap -c -p -cp "$J" net.minecraft.client.renderer.entity.player.AvatarRenderer | sed -n '/public void extractRenderState(AvatarlikeEntity/,/^$/p' | grep -E 'invoke|headItem|putfield|getfield' | head -60
+          echo "=== LivingEntityRenderer.extractRenderState body"; javap -c -p -cp "$J" net.minecraft.client.renderer.entity.LivingEntityRenderer | sed -n '/public void extractRenderState(T, S, float)/,/^$/p' | grep -E 'invoke|headItem|wornHead' | head -60
+          echo "=== who touches headItem"; for c in $(unzip -l "$J" | awk '{print $4}' | grep -E '^net/minecraft/client/renderer/entity/.*\.class$' | sed 's/\.class$//; s#/#.#g'); do javap -c -p -cp "$J" "$c" 2>/dev/null | grep -q 'LivingEntityRenderState.headItem' && echo "$c"; done
