@@ -1,6 +1,13 @@
 package de.sapatorl.cosmetics;
 
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemDisplayContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
@@ -27,6 +34,10 @@ public final class Cosmetics {
             new Entry("kopfhoerer", "Gaming-Headset", 0xB57BFF)
     );
 
+    public static final Logger LOG = LoggerFactory.getLogger("sapatorl_cosmetics");
+    private static boolean loggedApply = false;
+    private static String lastSkip = "";
+
     private static String selected = "";
     private static ItemStack cachedStack = ItemStack.EMPTY;
 
@@ -39,6 +50,9 @@ public final class Cosmetics {
     public static void select(String id) {
         selected = id == null ? "" : id;
         cachedStack = ItemStack.EMPTY;
+        loggedApply = false;
+        lastSkip = "";
+        LOG.info("[sapatorl_cosmetics] Ausgewaehlt: '{}'", selected);
         save();
     }
 
@@ -51,6 +65,32 @@ public final class Cosmetics {
             cachedStack = s;
         }
         return cachedStack;
+    }
+
+    /** Setzt das Cosmetic als Kopf-Item in den Render-State (nur eigener Spieler). */
+    public static void applyTo(LivingEntity entity, LivingEntityRenderState state) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || entity != mc.player) return;
+        ItemStack cosmetic = stack();
+        if (cosmetic.isEmpty()) return;
+        if (!entity.getItemBySlot(EquipmentSlot.HEAD).isEmpty()) {
+            skip("Helm/Kopf-Item ausgeruestet");
+            return;
+        }
+        state.wornHeadType = null;
+        state.wornHeadProfile = null;
+        mc.getItemModelResolver().updateForLiving(state.headItem, cosmetic, ItemDisplayContext.HEAD, entity);
+        if (!loggedApply) {
+            loggedApply = true;
+            LOG.info("[sapatorl_cosmetics] Cosmetic '{}' angewendet, headItem leer = {}", selected, state.headItem.isEmpty());
+        }
+    }
+
+    private static void skip(String why) {
+        if (!why.equals(lastSkip)) {
+            lastSkip = why;
+            LOG.info("[sapatorl_cosmetics] Cosmetic nicht angezeigt: {}", why);
+        }
     }
 
     private static Path file() {
